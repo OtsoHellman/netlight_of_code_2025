@@ -5,21 +5,13 @@ import gleam/string
 import simplifile
 
 pub fn main() {
-  let part1 = solve1()
-  io.println("\nPart 1 solution:")
-  io.println(part1)
-
-  let part2 = solve2()
-  io.println("\nPart 2 solution:")
-  io.println(part2)
-
-  let part3 = solve3()
-  io.println("\nPart 3 solution:")
-  io.println(part3)
+  let result = solve()
+  io.println("\nsolution:")
+  io.println(result)
 }
 
-fn solve1() {
-  let assert Ok(input) = read_input("input1.txt")
+fn solve() {
+  let assert Ok(input) = read_input("input.txt")
 
   let alphabet = [
     "a",
@@ -70,12 +62,6 @@ fn solve1() {
   strings |> list.count(is_palindrome) |> int.to_string
 }
 
-fn solve2() {
-  let assert Ok(_input) = read_input("input2.txt")
-
-  "TODO"
-}
-
 fn reverse_string(s: String) {
   s
   |> string.to_graphemes
@@ -85,12 +71,6 @@ fn reverse_string(s: String) {
 
 fn is_palindrome(s: String) {
   s == reverse_string(s)
-}
-
-fn solve3() {
-  let assert Ok(_input) = read_input("input3.txt")
-
-  "TODO"
 }
 
 fn read_input(filename: String) -> Result(String, simplifile.FileError) {

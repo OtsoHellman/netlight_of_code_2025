@@ -41,7 +41,7 @@ fn setup_day(day: Int) {
   }
 
   // Create input files
-  let input_files = ["input1.txt", "input2.txt", "input3.txt"]
+  let input_files = ["input.txt"]
   list.each(input_files, fn(filename) {
     let filepath = inputs_dir <> "/" <> filename
     case simplifile.is_file(filepath) {
@@ -80,33 +80,13 @@ import gleam/io
 import simplifile
 
 pub fn main() {
-  let part1 = solve1()
-  io.println(\"\\nPart 1 solution:\")
-  io.println(part1)
-
-  let part2 = solve2()
-  io.println(\"\\nPart 2 solution:\")
-  io.println(part2)
-
-  let part3 = solve3()
-  io.println(\"\\nPart 3 solution:\")
-  io.println(part3)
+  let result = solve()
+  io.println(\"\\nsolution:\")
+  io.println(result)
 }
 
-fn solve1()  {
-  let assert Ok(_input) = read_input(\"input1.txt\")
-
-  \"TODO\"
-}
-
-fn solve2()  {
-  let assert Ok(_input) = read_input(\"input2.txt\")
-
-  \"TODO\"
-}
-
-fn solve3()  {
-  let assert Ok(_input) = read_input(\"input3.txt\")
+fn solve()  {
+  let assert Ok(input) = read_input(\"input.txt\")
 
   \"TODO\"
 }
