@@ -83,7 +83,7 @@ fn get_score(drink: String) {
     "cappuccino" -> 3
     "latte" -> 3
     "mocha" -> 4
-    c -> {
+    _ -> {
       panic
     }
   }
