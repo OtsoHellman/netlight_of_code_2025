@@ -1,14 +1,11 @@
-// ETS table reference type (phantom type to track key/value types)
+import gleam/erlang/atom.{type Atom}
+
 pub opaque type Cache(k, v) {
   Cache(table: Int)
 }
 
-// ETS table options
-type TableOptions
-
-// Direct Erlang FFI bindings
 @external(erlang, "ets", "new")
-fn ets_new(name: atom, options: List(TableOptions)) -> Int
+fn ets_new(name: Atom, options: List(Atom)) -> Int
 
 @external(erlang, "ets", "insert")
 fn ets_insert(table: Int, object: #(k, v)) -> Bool
@@ -16,23 +13,27 @@ fn ets_insert(table: Int, object: #(k, v)) -> Bool
 @external(erlang, "ets", "lookup")
 fn ets_lookup(table: Int, key: k) -> List(#(k, v))
 
-// Helper to create atom from string
+@external(erlang, "ets", "whereis")
+fn ets_whereis_dynamic(name: Atom) -> a
+
 @external(erlang, "erlang", "binary_to_atom")
-fn string_to_atom(str: String) -> atom
+fn string_to_atom(str: String) -> Atom
 
-// Table option constructors
-@external(erlang, "ffi", "named_table")
-fn named_table() -> TableOptions
+fn is_undefined(value: a) -> Bool {
+  let undefined = string_to_atom("undefined")
+  do_is_equal(value, undefined)
+}
 
-@external(erlang, "ffi", "public_table")
-fn public_table() -> TableOptions
+@external(erlang, "erlang", "=:=")
+fn do_is_equal(a: a, b: b) -> Bool
 
-@external(erlang, "ffi", "set_table")
-fn set_table() -> TableOptions
-
-pub fn create_named(name: String) -> Cache(k, v) {
+fn create_named(name: String) -> Cache(k, v) {
   let table_name = string_to_atom(name)
-  let options = [named_table(), public_table(), set_table()]
+  let options = [
+    string_to_atom("named_table"),
+    string_to_atom("public"),
+    string_to_atom("set"),
+  ]
   let table_id = ets_new(table_name, options)
   Cache(table_id)
 }
@@ -41,7 +42,7 @@ pub fn create() -> Cache(k, v) {
   create_named("aoc_cache")
 }
 
-pub fn get(cache: Cache(k, v), key: k) -> Result(v, Nil) {
+fn get(cache: Cache(k, v), key: k) -> Result(v, Nil) {
   let Cache(table) = cache
   case ets_lookup(table, key) {
     [#(_, value), ..] -> Ok(value)
@@ -49,7 +50,7 @@ pub fn get(cache: Cache(k, v), key: k) -> Result(v, Nil) {
   }
 }
 
-pub fn set(cache: Cache(k, v), key: k, value: v) -> Nil {
+fn set(cache: Cache(k, v), key: k, value: v) -> Nil {
   let Cache(table) = cache
   ets_insert(table, #(key, value))
   Nil
@@ -64,4 +65,32 @@ pub fn memoize(cache: Cache(k, v), key: k, fun: fn() -> v) -> v {
       value
     }
   }
+}
+
+fn whereis(name: String) -> Result(Cache(k, v), Nil) {
+  let table_name = string_to_atom(name)
+  let result = ets_whereis_dynamic(table_name)
+
+  case is_undefined(result) {
+    True -> Error(Nil)
+    False -> {
+      let table_id = unsafe_coerce(result)
+      Ok(Cache(table_id))
+    }
+  }
+}
+
+@external(erlang, "erlang", "identity")
+fn unsafe_coerce(a: a) -> b
+
+pub fn try_memo(key: k, fun: fn() -> v) -> v {
+  case whereis("aoc_cache") {
+    Ok(cache) -> memoize(cache, key, fun)
+    Error(_) -> fun()
+  }
+}
+
+pub fn assert_memo(key: k, fun: fn() -> v) -> v {
+  let assert Ok(cache) = whereis("aoc_cache")
+  memoize(cache, key, fun)
 }
