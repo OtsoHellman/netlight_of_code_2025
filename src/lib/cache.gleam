@@ -80,7 +80,7 @@ fn whereis(name: String) -> Result(Cache(k, v), Nil) {
   }
 }
 
-@external(erlang, "erlang", "identity")
+@external(erlang, "cache_ffi", "identity")
 fn unsafe_coerce(a: a) -> b
 
 pub fn try_memo(key: k, fun: fn() -> v) -> v {
