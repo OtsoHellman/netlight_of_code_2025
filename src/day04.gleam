@@ -1,10 +1,7 @@
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/string
 import lib/cache
-import simplifile
-import utils/regexpx
 
 pub fn main() {
   let result = solve()

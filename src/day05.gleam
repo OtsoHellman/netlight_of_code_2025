@@ -1,7 +1,6 @@
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/string
 import lib/algos
 import lib/grid
 import simplifile
