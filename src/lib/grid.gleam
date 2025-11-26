@@ -1,4 +1,4 @@
-import aoc_2024/utils/resultx
+import utils/resultx
 import gleam/bool
 import gleam/int
 import gleam/io
@@ -7,10 +7,10 @@ import gleam/pair
 import gleam/result
 import gleam/set
 import gleam/string
-import glearray
+import iv
 
 pub type Grid(t) =
-  glearray.Array(glearray.Array(t))
+  iv.Array(iv.Array(t))
 
 pub type Coord =
   #(Int, Int)
@@ -48,9 +48,9 @@ pub fn new(size: #(Int, Int)) -> Grid(String) {
   |> list.map(fn(_) {
     list.range(1, rows)
     |> list.map(fn(_) { "." })
-    |> glearray.from_list()
+    |> iv.from_list()
   })
-  |> glearray.from_list()
+  |> iv.from_list()
 }
 
 pub fn parse_input_to_string_grid(input: String) -> Grid(String) {
@@ -59,14 +59,14 @@ pub fn parse_input_to_string_grid(input: String) -> Grid(String) {
   |> list.map(fn(line) { line |> string.split("") })
   |> list.transpose
   |> list.map(list.reverse)
-  |> list.map(glearray.from_list)
-  |> glearray.from_list
+  |> list.map(iv.from_list)
+  |> iv.from_list
 }
 
 fn to_string(grid: Grid(String)) {
   grid
-  |> glearray.to_list
-  |> list.map(glearray.to_list)
+  |> iv.to_list
+  |> list.map(iv.to_list)
   |> list.map(list.reverse)
   |> list.transpose
   |> list.map(string.join(_, ""))
@@ -86,11 +86,11 @@ pub fn conditional_print(
 
 pub fn map(grid: Grid(a), fun: fn(a) -> v) -> Grid(v) {
   grid
-  |> glearray.to_list
+  |> iv.to_list
   |> list.map(fn(col) {
-    col |> glearray.to_list |> list.map(fun) |> glearray.from_list
+    col |> iv.to_list |> list.map(fun) |> iv.from_list
   })
-  |> glearray.from_list
+  |> iv.from_list
 }
 
 pub fn map_with_coord(
@@ -111,7 +111,7 @@ pub fn parse_input_to_int_grid(input: String) -> Grid(Int) {
 
 pub fn at(grid: Grid(t), coord: Coord) -> Result(t, Nil) {
   let #(row, col) = coord
-  grid |> glearray.get(row) |> result.try(glearray.get(_, col))
+  grid |> iv.get(row) |> result.try(iv.get(_, col))
 }
 
 pub fn at_assert(grid: Grid(t), coord: Coord) -> t {
@@ -129,12 +129,12 @@ pub fn copy_set(grid: Grid(t), coord: Coord, value: t) {
   let #(x, y) = coord
 
   grid
-  |> glearray.copy_set(
+  |> iv.set(
     x,
     grid
-      |> glearray.get(x)
+      |> iv.get(x)
       |> resultx.assert_unwrap
-      |> glearray.copy_set(y, value)
+      |> iv.set(y, value)
       |> resultx.assert_unwrap,
   )
 }
@@ -143,20 +143,20 @@ pub fn assert_set(grid: Grid(t), coord: Coord, value: t) {
   let #(x, y) = coord
 
   grid
-  |> glearray.copy_set(
+  |> iv.set(
     x,
     grid
-      |> glearray.get(x)
+      |> iv.get(x)
       |> resultx.assert_unwrap
-      |> glearray.copy_set(y, value)
+      |> iv.set(y, value)
       |> resultx.assert_unwrap,
   )
   |> resultx.assert_unwrap
 }
 
 pub fn length(grid: Grid(t)) -> #(Int, Int) {
-  let rows = grid |> glearray.length
-  let cols = grid |> glearray.get(0) |> resultx.assert_unwrap |> glearray.length
+  let rows = grid |> iv.length
+  let cols = grid |> iv.get(0) |> resultx.assert_unwrap |> iv.length
   #(rows, cols)
 }
 

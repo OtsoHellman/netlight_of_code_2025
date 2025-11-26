@@ -1,75 +1,67 @@
-// // import carpenter/table
-// import gleam/list
-// import gleam/pair
-// import gleam/result
-// import utils/resultx
+// ETS table reference type (phantom type to track key/value types)
+pub opaque type Cache(k, v) {
+  Cache(table: Int)
+}
 
-// pub type Cache(k, v) =
-//   table.Set(k, v)
+// ETS table options
+type TableOptions
 
-// pub fn create_named(name: String) {
-//   let assert Ok(table) =
-//     table.build(name)
-//     |> table.privacy(table.Public)
-//     |> table.write_concurrency(table.AutoWriteConcurrency)
-//     |> table.read_concurrency(True)
-//     |> table.decentralized_counters(True)
-//     |> table.compression(False)
-//     |> table.set
+// Direct Erlang FFI bindings
+@external(erlang, "ets", "new")
+fn ets_new(name: atom, options: List(TableOptions)) -> Int
 
-//   table
-// }
+@external(erlang, "ets", "insert")
+fn ets_insert(table: Int, object: #(k, v)) -> Bool
 
-// pub fn create() {
-//   create_named("aoc_cache")
-// }
+@external(erlang, "ets", "lookup")
+fn ets_lookup(table: Int, key: k) -> List(#(k, v))
 
-// fn get_cache() {
-//   table.ref("aoc_cache")
-// }
+// Helper to create atom from string
+@external(erlang, "erlang", "binary_to_atom")
+fn string_to_atom(str: String) -> atom
 
-// pub fn drop() {
-//   get_cache() |> result.map(table.drop)
-// }
+// Table option constructors
+@external(erlang, "ffi", "named_table")
+fn named_table() -> TableOptions
 
-// pub fn get(table: table.Set(k, v), key: k) {
-//   table
-//   |> table.lookup(key)
-//   |> list.first
-//   |> result.map(pair.second)
-// }
+@external(erlang, "ffi", "public_table")
+fn public_table() -> TableOptions
 
-// pub fn set(table: table.Set(k, v), key: k, value: v) {
-//   table |> table.insert([#(key, value)])
-// }
+@external(erlang, "ffi", "set_table")
+fn set_table() -> TableOptions
 
-// pub fn memoize(table: table.Set(k, v), key: k, fun: fn() -> v) {
-//   case table |> get(key) {
-//     Ok(value) -> value
-//     Error(_) -> {
-//       let value = fun()
-//       table |> set(key, value)
-//       value
-//     }
-//   }
-// }
+pub fn create_named(name: String) -> Cache(k, v) {
+  let table_name = string_to_atom(name)
+  let options = [named_table(), public_table(), set_table()]
+  let table_id = ets_new(table_name, options)
+  Cache(table_id)
+}
 
-// pub fn memoize_named(table_name: String, key: k, fun: fn() -> v) {
-//   let table = table.ref(table_name) |> resultx.assert_unwrap
+pub fn create() -> Cache(k, v) {
+  create_named("aoc_cache")
+}
 
-//   case table |> get(key) {
-//     Ok(value) -> value
-//     Error(_) -> {
-//       let value = fun()
-//       table |> set(key, value)
-//       value
-//     }
-//   }
-// }
+pub fn get(cache: Cache(k, v), key: k) -> Result(v, Nil) {
+  let Cache(table) = cache
+  case ets_lookup(table, key) {
+    [#(_, value), ..] -> Ok(value)
+    [] -> Error(Nil)
+  }
+}
 
-// pub fn try_memo(key: k, fun: fn() -> v) {
-//   case get_cache() {
-//     Ok(cache) -> memoize(cache, key, fun)
-//     Error(_) -> fun()
-//   }
-// }
+pub fn set(cache: Cache(k, v), key: k, value: v) -> Nil {
+  let Cache(table) = cache
+  ets_insert(table, #(key, value))
+  Nil
+}
+
+pub fn memoize(cache: Cache(k, v), key: k, fun: fn() -> v) -> v {
+  case get(cache, key) {
+    Ok(value) -> value
+    Error(_) -> {
+      let value = fun()
+      set(cache, key, value)
+      value
+    }
+  }
+}
